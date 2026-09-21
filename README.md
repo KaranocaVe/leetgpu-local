@@ -123,6 +123,6 @@ Challenge statements, starter code, tests, and reference implementations belong 
 
 The hosted job runs inside an NVIDIA CUDA development container, pins the upstream challenge set to a known commit for reproducibility, configures with `sm_75` instead of `native` (GitHub-hosted runners do not have a physical GPU), verifies that every upstream CUDA starter produced a local solution and a `compile_commands.json` entry, then compiles all generated CUDA starter libraries.
 
-At the pinned upstream revision, the repository contains 101 CUDA challenges: 19 Easy, 66 Medium, and 16 Hard. The CI validator derives these numbers from the upstream tree rather than hard-coding them.
+At the pinned upstream revision, the upstream repository has 101 challenge directories, but 100 CUDA starters: 18 Easy, 66 Medium, and 16 Hard. `easy/41_simple_inference` currently has no `starter.cu`, so it is intentionally not registered as a CUDA target. The CI validator derives the CUDA count from the upstream tree rather than hard-coding it.
 
 A second `gpu-smoke` job is available through **Actions → CI → Run workflow → run_gpu_smoke**. It targets a self-hosted runner labeled `gpu` and replaces the Vector Add starter with a known-good fixture before running the official LeetGPU functional cases through the local `ctypes`/PyTorch harness. This job is optional because GitHub's ordinary hosted runner has no CUDA device.
