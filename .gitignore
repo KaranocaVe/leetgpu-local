@@ -7,3 +7,4 @@ __pycache__/
 *.dylib
 *.dll
 compile_commands.json
+/.idea/
