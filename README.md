@@ -11,9 +11,26 @@ The upstream challenge definitions are **not vendored**. CMake fetches `AlphaGPU
 - CMake >= 3.24
 - Ninja (recommended)
 - CUDA Toolkit / `nvcc`
-- Python 3
-- PyTorch with CUDA support (only needed for local correctness tests)
+- [uv](https://docs.astral.sh/uv/)
 - clangd (optional, for completion/navigation)
+
+Python itself and Python dependencies are managed by uv. The repository pins Python 3.13 in `.python-version` and commits `uv.lock` for reproducible environments. PyTorch is an optional `gpu` extra: Linux resolves the CUDA 13.0 build, while non-Linux platforms resolve the CPU build.
+
+## Python environment
+
+Create/sync the lightweight base environment:
+
+```bash
+uv sync --locked
+```
+
+The base environment has no heavy runtime dependencies. Local correctness tests need PyTorch and will automatically request the `gpu` extra through CMake; you can also install it explicitly:
+
+```bash
+uv sync --locked --extra gpu
+```
+
+Dependency changes should go through uv, for example `uv add --optional gpu <package>`, followed by committing both `pyproject.toml` and `uv.lock`.
 
 ## First configure
 
@@ -54,7 +71,7 @@ cmake --build build --target lgpu_easy_1_vector_add
 cmake --build build --target check_easy_1_vector_add
 ```
 
-The `check_*` target builds the CUDA shared library and runs the official functional tests from that challenge's `challenge.py` against your `solve` function.
+The `check_*` target builds the CUDA shared library and runs the official functional tests from that challenge's `challenge.py` against your `solve` function. Python is invoked as `uv run --locked --extra gpu python ...`, so the test environment always matches the committed lockfile.
 
 List all targets:
 
@@ -119,7 +136,7 @@ Challenge statements, starter code, tests, and reference implementations belong 
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` validates the harness on every push and pull request.
+`.github/workflows/ci.yml` validates the harness on every push and pull request. It also verifies that `uv.lock` matches `pyproject.toml` and runs Python helper checks through uv.
 
 The hosted job runs inside an NVIDIA CUDA development container, pins the upstream challenge set to a known commit for reproducibility, configures with `sm_75` instead of `native` (GitHub-hosted runners do not have a physical GPU), verifies that every upstream CUDA starter produced a local solution and a `compile_commands.json` entry, then compiles all generated CUDA starter libraries.
 
