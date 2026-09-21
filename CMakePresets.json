@@ -1,0 +1,36 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "LeetGPU local (Ninja)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "LEETGPU_BUILD_ALL": "OFF",
+        "LEETGPU_ENABLE_TESTS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "all",
+      "configurePreset": "default",
+      "targets": ["leetgpu-all"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "all",
+      "configurePreset": "default",
+      "output": {"outputOnFailure": true}
+    }
+  ]
+}
