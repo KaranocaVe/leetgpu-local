@@ -15,7 +15,7 @@ set(LEETGPU_CUDA_ARCHITECTURES "native" CACHE STRING "CUDA architectures used fo
 set(LEETGPU_UPSTREAM_TAG "main" CACHE STRING "AlphaGPU/leetgpu-challenges git tag/branch/commit")
 set(LEETGPU_UPSTREAM_DIR "" CACHE PATH "Use an existing leetgpu-challenges checkout instead of fetching it")
 
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
+find_program(UV_EXECUTABLE uv REQUIRED)
 include(CTest)
 include(FetchContent)
 include(cmake/LeetGPU.cmake)
