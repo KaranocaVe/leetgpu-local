@@ -27,33 +27,17 @@ jobs:
   static:
     name: uv / Python / repository checks
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
       - name: Install uv
         uses: astral-sh/setup-uv@v10.1.0
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      - name: Generate lockfile
-        run: uv lock
-      - name: Commit generated lockfile
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          if git diff --quiet -- uv.lock && git ls-files --error-unmatch uv.lock >/dev/null 2>&1; then
-            echo "uv.lock is already committed and current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uv.lock
-          git commit -m "build: add uv lockfile"
-          git push origin HEAD:"$GITHUB_HEAD_REF"
       - name: Verify lockfile
         run: uv lock --check
+      - name: Sync base environment
+        run: uv sync --locked
       - name: Compile Python helpers through uv
         run: uv run --locked python -m py_compile tools/*.py
       - name: Check CMake preset JSON
@@ -75,7 +59,7 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            ca-certificates cmake git ninja-build python3
+            ca-certificates cmake git ninja-build
           rm -rf /var/lib/apt/lists/*
       - name: Toolchain versions
         run: |
@@ -83,6 +67,9 @@ jobs:
           cmake --version
           ninja --version
           uv --version
+          uv run --locked python --version
+      - name: Verify lockfile
+        run: uv lock --check
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja \
@@ -92,7 +79,7 @@ jobs:
             -DLEETGPU_ENABLE_TESTS=OFF
       - name: Validate generated workspace and compile database
         run: |
-          python3 tools/validate_configure.py \
+          uv run --locked python tools/validate_configure.py \
             --upstream build/_deps/leetgpu_challenges-src \
             --source . \
             --build build
@@ -110,6 +97,8 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
+      - name: Verify lockfile
+        run: uv lock --check
       - name: Sync locked GPU environment
         run: uv sync --locked --extra gpu
       - name: Configure
