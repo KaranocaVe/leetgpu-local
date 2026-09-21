@@ -29,7 +29,7 @@ jobs:
     name: Python / repository checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Compile Python helpers
         run: python3 -m py_compile tools/*.py
       - name: Check CMake preset JSON
@@ -41,7 +41,7 @@ jobs:
     container:
       image: nvidia/cuda:13.4.1-devel-ubuntu24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install build tools
         run: |
           apt-get update
@@ -75,7 +75,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_gpu_smoke }}
     runs-on: [self-hosted, linux, x64, gpu]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja \
