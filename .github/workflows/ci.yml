@@ -20,20 +20,34 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Pin CI so an upstream challenge change cannot break an otherwise unchanged commit.
-  # Local development still tracks main by default and can override LEETGPU_UPSTREAM_TAG.
   LEETGPU_CI_UPSTREAM: e6579a64e20e30d63f8cc18c79d59d3c95588db1
+  UV_VERSION: "0.12.15"
 
 jobs:
   static:
-    name: Python / repository checks
+    name: uv / Python / repository checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Compile Python helpers
-        run: python3 -m py_compile tools/*.py
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Generate lockfile
+        run: uv lock
+      - name: Verify lockfile
+        run: uv lock --check
+      - name: Compile Python helpers through uv
+        run: uv run --locked python -m py_compile tools/*.py
       - name: Check CMake preset JSON
-        run: python3 -m json.tool CMakePresets.json >/dev/null
+        run: uv run --locked python -m json.tool CMakePresets.json >/dev/null
+      - name: Upload generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: uv-lock
+          path: uv.lock
+          if-no-files-found: error
 
   cuda-compile:
     name: Configure + compile all CUDA starters
@@ -42,6 +56,11 @@ jobs:
       image: nvidia/cuda:13.4.1-devel-ubuntu24.04
     steps:
       - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Install build tools
         run: |
           apt-get update
@@ -53,7 +72,7 @@ jobs:
           nvcc --version
           cmake --version
           ninja --version
-          python3 --version
+          uv --version
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja \
@@ -76,6 +95,13 @@ jobs:
     runs-on: [self-hosted, linux, x64, gpu]
     steps:
       - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Sync locked GPU environment
+        run: uv sync --locked --extra gpu
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja \
