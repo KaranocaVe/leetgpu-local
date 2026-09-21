@@ -1,0 +1,8 @@
+/build/
+/.cache/
+__pycache__/
+*.pyc
+*.so
+*.dylib
+*.dll
+compile_commands.json
