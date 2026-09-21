@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_gpu_smoke:
+        description: "Run the CUDA runtime smoke test on a self-hosted GPU runner"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pin CI so an upstream challenge change cannot break an otherwise unchanged commit.
+  # Local development still tracks main by default and can override LEETGPU_UPSTREAM_TAG.
+  LEETGPU_CI_UPSTREAM: e6579a64e20e30d63f8cc18c79d59d3c95588db1
+
+jobs:
+  static:
+    name: Python / repository checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Python helpers
+        run: python3 -m py_compile tools/*.py
+      - name: Check CMake preset JSON
+        run: python3 -m json.tool CMakePresets.json >/dev/null
+
+  cuda-compile:
+    name: Configure + compile all CUDA starters
+    runs-on: ubuntu-latest
+    container:
+      image: nvidia/cuda:13.4.1-devel-ubuntu24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates cmake git ninja-build python3
+          rm -rf /var/lib/apt/lists/*
+      - name: Toolchain versions
+        run: |
+          nvcc --version
+          cmake --version
+          ninja --version
+          python3 --version
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLEETGPU_UPSTREAM_TAG="$LEETGPU_CI_UPSTREAM" \
+            -DLEETGPU_CUDA_ARCHITECTURES=75 \
+            -DLEETGPU_ENABLE_TESTS=OFF
+      - name: Validate generated workspace and compile database
+        run: |
+          python3 tools/validate_configure.py \
+            --upstream build/_deps/leetgpu_challenges-src \
+            --source . \
+            --build build
+      - name: Compile every CUDA starter
+        run: cmake --build build --target leetgpu-all --parallel 2
+
+  gpu-smoke:
+    name: Runtime harness smoke test
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_gpu_smoke }}
+    runs-on: [self-hosted, linux, x64, gpu]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLEETGPU_UPSTREAM_TAG="$LEETGPU_CI_UPSTREAM" \
+            -DLEETGPU_CUDA_ARCHITECTURES=native \
+            -DLEETGPU_ENABLE_TESTS=ON
+      - name: Install known-good Vector Add fixture
+        run: cp tests/fixtures/vector_add_solution.cu solutions/easy/1_vector_add/solution.cu
+      - name: Run official Vector Add functional cases through local harness
+        run: cmake --build build --target check_easy_1_vector_add
