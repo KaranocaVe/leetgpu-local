@@ -15,7 +15,6 @@ function(_leetgpu_ensure_upstream OUT_DIR)
     get_filename_component(_upstream "${LEETGPU_UPSTREAM_DIR}" ABSOLUTE)
   else()
     if(LEETGPU_UPSTREAM_TAG MATCHES "^[0-9a-fA-F]{40}$")
-      # A pinned commit may no longer be reachable from a future shallow clone.
       set(_leetgpu_git_shallow FALSE)
     else()
       set(_leetgpu_git_shallow TRUE)
@@ -38,7 +37,6 @@ endfunction()
 
 function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
   file(RELATIVE_PATH _rel "${UPSTREAM_ROOT}/challenges" "${STARTER_FILE}")
-  # easy/1_vector_add/starter/starter.cu -> easy ; 1_vector_add
   string(REPLACE "/" ";" _parts "${_rel}")
   list(LENGTH _parts _nparts)
   if(_nparts LESS 4)
@@ -78,9 +76,11 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
 
   set(_check_target "check_${_slug}")
   add_custom_target(${_check_target}
-    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_challenge.py"
+    COMMAND "${UV_EXECUTABLE}" run --locked --extra gpu python
+            "${PROJECT_SOURCE_DIR}/tools/run_challenge.py"
             --challenge-dir "${_challenge_dir}"
             --library "$<TARGET_FILE:${_target}>"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     DEPENDS ${_target}
     USES_TERMINAL
     COMMAND_EXPAND_LISTS
@@ -89,11 +89,15 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
 
   if(LEETGPU_ENABLE_TESTS AND BUILD_TESTING)
     add_test(NAME ${_slug}
-      COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_challenge.py"
+      COMMAND "${UV_EXECUTABLE}" run --locked --extra gpu python
+              "${PROJECT_SOURCE_DIR}/tools/run_challenge.py"
               --challenge-dir "${_challenge_dir}"
               --library "$<TARGET_FILE:${_target}>"
     )
-    set_tests_properties(${_slug} PROPERTIES LABELS "${_difficulty};leetgpu")
+    set_tests_properties(${_slug} PROPERTIES
+      LABELS "${_difficulty};leetgpu"
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    )
   endif()
 
   set_property(GLOBAL APPEND PROPERTY LEETGPU_TARGETS ${_target})
@@ -125,13 +129,16 @@ function(leetgpu_configure)
   endif()
 
   add_custom_target(leetgpu-list
-    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/list_challenges.py"
+    COMMAND "${UV_EXECUTABLE}" run --locked python
+            "${PROJECT_SOURCE_DIR}/tools/list_challenges.py"
             --upstream "${_upstream}"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL
     VERBATIM
   )
 
   message(STATUS "LeetGPU: registered ${_count} CUDA challenge(s)")
+  message(STATUS "LeetGPU: Python runtime managed by uv (${UV_EXECUTABLE})")
   message(STATUS "LeetGPU: edit solutions/<difficulty>/<challenge>/solution.cu")
   message(STATUS "LeetGPU: run a challenge with: cmake --build build --target check_<difficulty>_<challenge>")
 endfunction()
