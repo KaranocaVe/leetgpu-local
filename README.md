@@ -1,5 +1,7 @@
 # leetgpu-local
 
+[![CI](https://github.com/KaranocaVe/leetgpu-local/actions/workflows/ci.yml/badge.svg)](https://github.com/KaranocaVe/leetgpu-local/actions/workflows/ci.yml)
+
 Local CUDA development harness for [LeetGPU](https://leetgpu.com/challenges), with CMake, clangd-friendly compilation databases, and local correctness tests.
 
 The upstream challenge definitions are **not vendored**. CMake fetches `AlphaGPU/leetgpu-challenges` and copies each CUDA starter into `solutions/` only when that solution does not already exist. Your edits are never overwritten.
