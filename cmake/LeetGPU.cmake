@@ -22,6 +22,17 @@ function(_leetgpu_ensure_upstream OUT_DIR)
 
     # Keep the fetched repository outside CMake's build directory so CLion's
     # multiple profiles (Debug/Release/etc.) share one checkout.
+    file(MAKE_DIRECTORY "${LEETGPU_FETCHCONTENT_BASE_DIR}")
+    file(
+      LOCK "${LEETGPU_FETCHCONTENT_BASE_DIR}/.populate.lock"
+      GUARD FUNCTION
+      TIMEOUT 300
+      RESULT_VARIABLE _leetgpu_lock_result
+    )
+    if(NOT _leetgpu_lock_result EQUAL 0)
+      message(FATAL_ERROR "Could not lock LeetGPU upstream cache: ${_leetgpu_lock_result}")
+    endif()
+
     set(FETCHCONTENT_BASE_DIR "${LEETGPU_FETCHCONTENT_BASE_DIR}")
 
     # Once the checkout exists, point FetchContent directly at it. This skips
