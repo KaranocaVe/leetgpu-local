@@ -9,6 +9,7 @@ CompileFlags:
   Add:
     - "-xcuda"
     - "--cuda-path=/usr/local/cuda"
+    - "--no-cuda-version-check"
     - "-std=c++20"
 Diagnostics:
   UnusedIncludes: Strict
