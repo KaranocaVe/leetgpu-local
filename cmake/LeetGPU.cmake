@@ -102,6 +102,29 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
     $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
   )
 
+  set(_ptx_dir "${CMAKE_BINARY_DIR}/ptx/${_difficulty}")
+  set(_ptx_file "${_ptx_dir}/${_challenge}.ptx")
+  set(_ptx_target "ptx_${_slug}")
+  add_custom_command(
+    OUTPUT "${_ptx_file}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${_ptx_dir}"
+    COMMAND "${CMAKE_CUDA_COMPILER}"
+            --ptx
+            --gpu-architecture=compute_${LEETGPU_PTX_ARCHITECTURE}
+            --std=c++20
+            --expt-relaxed-constexpr
+            --generate-line-info
+            --source-in-ptx
+            "-I${_solution_dir}"
+            "-I${_challenge_dir}"
+            -o "${_ptx_file}"
+            "${_solution}"
+    DEPENDS "${_solution}"
+    COMMENT "Generating PTX for ${_difficulty}/${_challenge}"
+    VERBATIM
+  )
+  add_custom_target(${_ptx_target} DEPENDS "${_ptx_file}")
+
   set(_check_target "check_${_slug}")
   add_custom_target(${_check_target}
     COMMAND "${UV_EXECUTABLE}" run --extra gpu python
@@ -130,6 +153,7 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
 
   set_property(GLOBAL APPEND PROPERTY LEETGPU_TARGETS ${_target})
   set_property(GLOBAL APPEND PROPERTY LEETGPU_CHECK_TARGETS ${_check_target})
+  set_property(GLOBAL APPEND PROPERTY LEETGPU_PTX_TARGETS ${_ptx_target})
 endfunction()
 
 function(_leetgpu_add_update_target UPSTREAM_ROOT)
@@ -158,6 +182,13 @@ function(_leetgpu_add_update_target UPSTREAM_ROOT)
 endfunction()
 
 function(leetgpu_configure)
+  if(NOT LEETGPU_PTX_ARCHITECTURE MATCHES "^[0-9]+[a-z]?$")
+    message(
+      FATAL_ERROR
+      "LEETGPU_PTX_ARCHITECTURE must be a virtual architecture suffix such as 89, 90, or 100a; got: ${LEETGPU_PTX_ARCHITECTURE}"
+    )
+  endif()
+
   _leetgpu_ensure_upstream(_upstream)
   set(LEETGPU_UPSTREAM_RESOLVED "${_upstream}" CACHE INTERNAL "Resolved upstream checkout")
 
@@ -181,6 +212,11 @@ function(leetgpu_configure)
     add_custom_target(leetgpu-all DEPENDS ${_targets})
   endif()
 
+  get_property(_ptx_targets GLOBAL PROPERTY LEETGPU_PTX_TARGETS)
+  if(_ptx_targets)
+    add_custom_target(leetgpu-ptx-all DEPENDS ${_ptx_targets})
+  endif()
+
   add_custom_target(leetgpu-list
     COMMAND "${UV_EXECUTABLE}" run python
             "${PROJECT_SOURCE_DIR}/tools/list_challenges.py"
@@ -195,6 +231,8 @@ function(leetgpu_configure)
   message(STATUS "LeetGPU: registered ${_count} CUDA challenge(s)")
   message(STATUS "LeetGPU: upstream cache: ${_upstream}")
   message(STATUS "LeetGPU: Python runtime managed by uv (${UV_EXECUTABLE})")
+  message(STATUS "LeetGPU: PTX virtual architecture: compute_${LEETGPU_PTX_ARCHITECTURE}")
   message(STATUS "LeetGPU: edit solutions/<difficulty>/<challenge>/solution.cu")
   message(STATUS "LeetGPU: run a challenge with: cmake --build build --target check_<difficulty>_<challenge>")
+  message(STATUS "LeetGPU: inspect PTX with: cmake --build build --target ptx_<difficulty>_<challenge>")
 endfunction()
