@@ -4,9 +4,9 @@
 
 Local CUDA development harness for [LeetGPU](https://leetgpu.com/challenges), with CMake, clangd-friendly compilation databases, and local correctness tests.
 
-The upstream challenge definitions are **not vendored**. On the first configure, CMake fetches `AlphaGPU/leetgpu-challenges` into a project-level cache at `.cache/fetchcontent/leetgpu_challenges-src` and copies each CUDA starter into `solutions/` only when that solution does not already exist. Your edits are never overwritten.
+The upstream challenge definitions are **not vendored**. On the first configure, CMake fetches `AlphaGPU/leetgpu-challenges` into a persistent user cache and copies each CUDA starter into `solutions/` only when that solution does not already exist. Your edits are never overwritten.
 
-The upstream checkout is shared by every CMake build directory/profile. Normal CMake reloads are fully local: once the cache exists, FetchContent is pointed directly at that checkout, so CLion opening/reloading the project does not perform a Git fetch or update.
+The upstream checkout is shared by every CMake build directory/profile and lives outside the project tree so CLion does not index it. Defaults are `~/.cache/leetgpu-local/fetchcontent` on Linux, `~/Library/Caches/leetgpu-local/fetchcontent` on macOS, and `%LOCALAPPDATA%/leetgpu-local/fetchcontent` on Windows. Normal CMake reloads are fully local: once the cache exists, FetchContent is pointed directly at that checkout, so CLion opening/reloading the project does not perform a Git fetch or update.
 
 ## Requirements
 
