@@ -89,10 +89,12 @@ Every CUDA challenge also has a compile-to-PTX target that does not link or exec
 cmake --build build --target ptx_easy_1_vector_add
 ```
 
-The generated file is written under the active CMake build directory:
+The generated file is written next to the CUDA solution:
 
 ```text
-<build>/ptx/easy/1_vector_add.ptx
+solutions/easy/1_vector_add/
+├── solution.cu
+└── solution.ptx
 ```
 
 PTX generation defaults to the virtual architecture `compute_89`, independently of the normal library build architecture. Override it at configure time if needed:
@@ -194,7 +196,7 @@ cmake --build "$HOME/.cache/leetgpu-local/build-no-gpu" \
 cmake --build "$HOME/.cache/leetgpu-local/build-no-gpu" \
   --target ptx_easy_1_vector_add
 
-less "$HOME/.cache/leetgpu-local/build-no-gpu/ptx/easy/1_vector_add.ptx"
+less solutions/easy/1_vector_add/solution.ptx
 ```
 
 Runtime correctness targets such as `check_easy_1_vector_add` still require a CUDA-capable GPU because the official tests execute PyTorch CUDA tensors and the compiled kernel.
