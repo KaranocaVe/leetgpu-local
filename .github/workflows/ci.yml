@@ -85,6 +85,7 @@ jobs:
             --source . \
             --build build
       - name: Verify reload is offline and CMP0169-clean
+        shell: bash
         run: |
           git -C .cache/fetchcontent/leetgpu_challenges-src remote set-url origin https://invalid.invalid/leetgpu-challenges.git
           set -o pipefail
