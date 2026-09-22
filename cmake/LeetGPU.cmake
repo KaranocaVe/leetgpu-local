@@ -104,7 +104,7 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
 
   set(_check_target "check_${_slug}")
   add_custom_target(${_check_target}
-    COMMAND "${UV_EXECUTABLE}" run --locked --extra gpu python
+    COMMAND "${UV_EXECUTABLE}" run --extra gpu python
             "${PROJECT_SOURCE_DIR}/tools/run_challenge.py"
             --challenge-dir "${_challenge_dir}"
             --library "$<TARGET_FILE:${_target}>"
@@ -117,7 +117,7 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
 
   if(LEETGPU_ENABLE_TESTS AND BUILD_TESTING)
     add_test(NAME ${_slug}
-      COMMAND "${UV_EXECUTABLE}" run --locked --extra gpu python
+      COMMAND "${UV_EXECUTABLE}" run --extra gpu python
               "${PROJECT_SOURCE_DIR}/tools/run_challenge.py"
               --challenge-dir "${_challenge_dir}"
               --library "$<TARGET_FILE:${_target}>"
@@ -182,7 +182,7 @@ function(leetgpu_configure)
   endif()
 
   add_custom_target(leetgpu-list
-    COMMAND "${UV_EXECUTABLE}" run --locked python
+    COMMAND "${UV_EXECUTABLE}" run python
             "${PROJECT_SOURCE_DIR}/tools/list_challenges.py"
             --upstream "${_upstream}"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"

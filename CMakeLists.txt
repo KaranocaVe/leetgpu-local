@@ -34,35 +34,6 @@ set(
 unset(_leetgpu_default_cache)
 
 find_program(UV_EXECUTABLE uv REQUIRED)
-execute_process(
-  COMMAND "${UV_EXECUTABLE}" --version
-  OUTPUT_VARIABLE _leetgpu_uv_version_output
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  RESULT_VARIABLE _leetgpu_uv_version_result
-)
-if(NOT _leetgpu_uv_version_result EQUAL 0)
-  message(FATAL_ERROR "Failed to execute uv: ${UV_EXECUTABLE}")
-endif()
-string(
-  REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+"
-  LEETGPU_UV_VERSION
-  "${_leetgpu_uv_version_output}"
-)
-if(
-  NOT LEETGPU_UV_VERSION
-  OR LEETGPU_UV_VERSION VERSION_LESS "0.12.15"
-  OR NOT LEETGPU_UV_VERSION VERSION_LESS "0.13.0"
-)
-  message(
-    FATAL_ERROR
-    "Incompatible uv version: ${_leetgpu_uv_version_output}. "
-    "This repository's uv.lock requires uv >=0.12.15,<0.13. "
-    "If uv was installed with Astral's standalone installer, run 'uv self update'."
-  )
-endif()
-unset(_leetgpu_uv_version_output)
-unset(_leetgpu_uv_version_result)
-
 include(CTest)
 include(FetchContent)
 include(cmake/LeetGPU.cmake)

@@ -14,7 +14,6 @@ gpu = [
 
 [tool.uv]
 package = false
-required-version = ">=0.12.15,<0.13"
 
 [tool.uv.sources]
 torch = [

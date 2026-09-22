@@ -8,3 +8,4 @@ __pycache__/
 *.dll
 compile_commands.json
 /.idea/
+uv.lock
