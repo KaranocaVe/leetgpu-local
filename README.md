@@ -13,12 +13,20 @@ The upstream checkout is shared by every CMake build directory/profile and lives
 - CMake >= 3.24
 - Ninja (recommended)
 - CUDA Toolkit / `nvcc`
-- [uv](https://docs.astral.sh/uv/)
+- [uv](https://docs.astral.sh/uv/) >= 0.12.15, < 0.13
 - clangd (optional, for completion/navigation)
 
-Python itself and Python dependencies are managed by uv. The repository pins Python 3.13 in `.python-version` and commits `uv.lock` for reproducible environments. PyTorch is an optional `gpu` extra: Linux resolves the CUDA 13.0 build, while non-Linux platforms resolve the CPU build.
+Python itself and Python dependencies are managed by uv. The repository pins Python 3.13 in `.python-version`, commits `uv.lock` for reproducible environments, and requires uv 0.12.x because uv only guarantees lockfile compatibility within a minor release. PyTorch is an optional `gpu` extra: Linux resolves the CUDA 13.0 build, while non-Linux platforms resolve the CPU build.
 
 ## Python environment
+
+Check uv first:
+
+```bash
+uv --version
+```
+
+If it is older than 0.12.15, upgrade it. Standalone-installer builds can use `uv self update`; otherwise upgrade uv with the package manager that installed it.
 
 Create/sync the lightweight base environment:
 
