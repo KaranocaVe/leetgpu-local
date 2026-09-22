@@ -17,20 +17,37 @@
         "LEETGPU_BUILD_ALL": "OFF",
         "LEETGPU_ENABLE_TESTS": "ON"
       }
+    },
+    {
+      "name": "container-no-gpu",
+      "displayName": "LeetGPU container (no GPU)",
+      "generator": "Ninja",
+      "binaryDir": "$env{HOME}/.cache/leetgpu-local/build-no-gpu",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "LEETGPU_BUILD_ALL": "OFF",
+        "LEETGPU_ENABLE_TESTS": "OFF",
+        "LEETGPU_CUDA_ARCHITECTURES": "89"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "all",
       "configurePreset": "default",
-      "targets": ["leetgpu-all"]
+      "targets": [
+        "leetgpu-all"
+      ]
     }
   ],
   "testPresets": [
     {
       "name": "all",
       "configurePreset": "default",
-      "output": {"outputOnFailure": true}
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
