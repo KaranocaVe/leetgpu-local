@@ -95,7 +95,7 @@ jobs:
         run: |
           cmake --build "$HOME/.cache/leetgpu-local/build-no-gpu" \
             --target ptx_easy_1_vector_add
-          PTX="$HOME/.cache/leetgpu-local/build-no-gpu/ptx/easy/1_vector_add.ptx"
+          PTX="$GITHUB_WORKSPACE/solutions/easy/1_vector_add/solution.ptx"
           test -s "$PTX"
           grep -q '^\.version ' "$PTX"
           grep -q '^\.target sm_89' "$PTX"
