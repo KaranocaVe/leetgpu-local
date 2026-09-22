@@ -14,10 +14,17 @@ RUN apt-get update \
         git \
         jq \
         less \
+        libfreetype6 \
+        libxi6 \
+        libxext6 \
+        libxrender1 \
+        libxtst6 \
         ninja-build \
         openssh-client \
         pkg-config \
+        procps \
         python3 \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -LsSf https://astral.sh/uv/install.sh \
