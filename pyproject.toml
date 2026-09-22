@@ -3,7 +3,9 @@ name = "leetgpu-local"
 version = "0.1.0"
 description = "Local CUDA development harness for LeetGPU"
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = [
+    "numpy>=2.5.3",
+]
 
 [project.optional-dependencies]
 gpu = [
