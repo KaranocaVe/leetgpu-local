@@ -105,6 +105,67 @@ CMake emits `build/compile_commands.json`. Most clangd clients discover `build/`
 
 The included `.clangd` strips several nvcc-only options and tells clangd to parse CUDA as C++20. If CUDA is not installed at `/usr/local/cuda`, change the `--cuda-path=` entry.
 
+## No-GPU development containers
+
+The repository includes two Dev Container configurations that provide the full CUDA **toolchain** without requiring a physical NVIDIA GPU. They use NVIDIA CUDA 13.4.1 devel on Ubuntu 24.04, which is available for both amd64 and arm64.
+
+Both configurations share the same Dockerfile and install:
+
+- CUDA Toolkit / `nvcc`
+- CMake + Ninja
+- clang + clangd
+- GCC/G++
+- GDB
+- Git + SSH client
+- uv
+
+The container bootstrap runs `uv sync` and configures the `container-no-gpu` CMake preset. This preset uses `sm_89` instead of `native`, so CMake and nvcc do not need a visible GPU.
+
+Build files, the uv cache, uv-managed Python installations, upstream LeetGPU sources, and virtual environments live in Docker named volumes rather than the mounted repository. This avoids host/container ownership problems and keeps rebuilds fast.
+
+### VS Code
+
+Requirements on the host:
+
+- Docker / Docker Desktop
+- VS Code
+- Dev Containers extension
+
+Open the repository, run **Dev Containers: Reopen in Container**, and select:
+
+```text
+LeetGPU - VS Code (no GPU)
+```
+
+The configuration installs the clangd, CMake Tools, Python, and TOML extensions inside the container. clangd reads the compile database from:
+
+```text
+/root/.cache/leetgpu-local/build-no-gpu
+```
+
+### CLion
+
+CLion supports the standard Dev Container specification. Open:
+
+```text
+.devcontainer/clion/devcontainer.json
+```
+
+Then use **Create Dev Container and Mount Sources...** from the gutter, or choose **Remote Development → Create Dev Container** and point CLion at that file.
+
+Once connected, select the `container-no-gpu` CMake preset if CLion does not select it automatically.
+
+### What works without a GPU
+
+You can configure CMake, get IDE completion/navigation, and compile CUDA challenge libraries:
+
+```bash
+cmake --build "$HOME/.cache/leetgpu-local/build-no-gpu" \
+  --target lgpu_easy_1_vector_add
+```
+
+Runtime correctness targets such as `check_easy_1_vector_add` still require a CUDA-capable GPU because the official tests execute PyTorch CUDA tensors and the compiled kernel.
+
 ## Use an existing upstream checkout
 
 To avoid CMake fetching GitHub itself:
