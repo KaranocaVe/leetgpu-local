@@ -102,12 +102,10 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
     $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
   )
 
-  set(_ptx_dir "${CMAKE_BINARY_DIR}/ptx/${_difficulty}")
-  set(_ptx_file "${_ptx_dir}/${_challenge}.ptx")
+  set(_ptx_file "${_solution_dir}/solution.ptx")
   set(_ptx_target "ptx_${_slug}")
   add_custom_command(
     OUTPUT "${_ptx_file}"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${_ptx_dir}"
     COMMAND "${CMAKE_CUDA_COMPILER}"
             --ptx
             --gpu-architecture=compute_${LEETGPU_PTX_ARCHITECTURE}
