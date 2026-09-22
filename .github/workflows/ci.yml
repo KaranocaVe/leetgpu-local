@@ -76,7 +76,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLEETGPU_UPSTREAM_TAG="$LEETGPU_CI_UPSTREAM" \
             -DLEETGPU_CUDA_ARCHITECTURES=75 \
-            -DLEETGPU_ENABLE_TESTS=OFF
+            -DLEETGPU_ENABLE_TESTS=OFF \
+            -DLEETGPU_FETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent"
       - name: Validate generated workspace and compile database
         run: |
           uv run --locked python tools/validate_configure.py \
@@ -91,7 +92,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLEETGPU_UPSTREAM_TAG="$LEETGPU_CI_UPSTREAM" \
             -DLEETGPU_CUDA_ARCHITECTURES=75 \
-            -DLEETGPU_ENABLE_TESTS=OFF 2>&1 | tee /tmp/reconfigure.log
+            -DLEETGPU_ENABLE_TESTS=OFF \
+            -DLEETGPU_FETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent" 2>&1 | tee /tmp/reconfigure.log
           ! grep -q "CMP0169" /tmp/reconfigure.log
           ! grep -q "FetchContent_Populate" /tmp/reconfigure.log
       - name: Compile every CUDA starter
