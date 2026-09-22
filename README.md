@@ -81,6 +81,34 @@ List all targets:
 cmake --build build --target leetgpu-list
 ```
 
+## Generate PTX
+
+Every CUDA challenge also has a compile-to-PTX target that does not link or execute the kernel:
+
+```bash
+cmake --build build --target ptx_easy_1_vector_add
+```
+
+The generated file is written under the active CMake build directory:
+
+```text
+<build>/ptx/easy/1_vector_add.ptx
+```
+
+PTX generation defaults to the virtual architecture `compute_89`, independently of the normal library build architecture. Override it at configure time if needed:
+
+```bash
+cmake -S . -B build -DLEETGPU_PTX_ARCHITECTURE=90
+```
+
+The PTX command includes line information and source annotations, so the emitted PTX is convenient for reading alongside `solution.cu`.
+
+Generate PTX for every registered CUDA challenge:
+
+```bash
+cmake --build build --target leetgpu-ptx-all -j
+```
+
 ## Build everything
 
 ```bash
@@ -157,11 +185,16 @@ Once connected, select the `container-no-gpu` CMake preset if CLion does not sel
 
 ### What works without a GPU
 
-You can configure CMake, get IDE completion/navigation, and compile CUDA challenge libraries:
+You can configure CMake, get IDE completion/navigation, compile CUDA challenge libraries, and inspect PTX:
 
 ```bash
 cmake --build "$HOME/.cache/leetgpu-local/build-no-gpu" \
   --target lgpu_easy_1_vector_add
+
+cmake --build "$HOME/.cache/leetgpu-local/build-no-gpu" \
+  --target ptx_easy_1_vector_add
+
+less "$HOME/.cache/leetgpu-local/build-no-gpu/ptx/easy/1_vector_add.ptx"
 ```
 
 Runtime correctness targets such as `check_easy_1_vector_add` still require a CUDA-capable GPU because the official tests execute PyTorch CUDA tensors and the compiled kernel.
