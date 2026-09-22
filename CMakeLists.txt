@@ -14,6 +14,12 @@ option(LEETGPU_ENABLE_TESTS "Register local correctness tests with CTest" ON)
 set(LEETGPU_CUDA_ARCHITECTURES "native" CACHE STRING "CUDA architectures used for local challenge builds")
 set(LEETGPU_UPSTREAM_TAG "main" CACHE STRING "AlphaGPU/leetgpu-challenges git tag/branch/commit")
 set(LEETGPU_UPSTREAM_DIR "" CACHE PATH "Use an existing leetgpu-challenges checkout instead of fetching it")
+set(
+  LEETGPU_FETCHCONTENT_BASE_DIR
+  "${PROJECT_SOURCE_DIR}/.cache/fetchcontent"
+  CACHE PATH
+  "Persistent FetchContent cache shared by all CMake build directories"
+)
 
 find_program(UV_EXECUTABLE uv REQUIRED)
 include(CTest)
