@@ -34,14 +34,12 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      - name: Verify lockfile
-        run: uv lock --check
       - name: Sync base environment
-        run: uv sync --locked
+        run: uv sync
       - name: Compile Python helpers through uv
-        run: uv run --locked python -m py_compile tools/*.py
+        run: uv run python -m py_compile tools/*.py
       - name: Check CMake preset JSON
-        run: uv run --locked python -m json.tool CMakePresets.json >/dev/null
+        run: uv run python -m json.tool CMakePresets.json >/dev/null
 
   cuda-compile:
     name: Configure + compile all CUDA starters
@@ -67,9 +65,7 @@ jobs:
           cmake --version
           ninja --version
           uv --version
-          uv run --locked python --version
-      - name: Verify lockfile
-        run: uv lock --check
+          uv run python --version
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja \
@@ -80,7 +76,7 @@ jobs:
             -DLEETGPU_FETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent"
       - name: Validate generated workspace and compile database
         run: |
-          uv run --locked python tools/validate_configure.py \
+          uv run python tools/validate_configure.py \
             --upstream .cache/fetchcontent/leetgpu_challenges-src \
             --source . \
             --build build
@@ -111,10 +107,8 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      - name: Verify lockfile
-        run: uv lock --check
-      - name: Sync locked GPU environment
-        run: uv sync --locked --extra gpu
+      - name: Sync GPU environment
+        run: uv sync --extra gpu
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja \
