@@ -13,34 +13,26 @@ The upstream checkout is shared by every CMake build directory/profile and lives
 - CMake >= 3.24
 - Ninja (recommended)
 - CUDA Toolkit / `nvcc`
-- [uv](https://docs.astral.sh/uv/) >= 0.12.15, < 0.13
+- [uv](https://docs.astral.sh/uv/)
 - clangd (optional, for completion/navigation)
 
-Python itself and Python dependencies are managed by uv. The repository pins Python 3.13 in `.python-version`, commits `uv.lock` for reproducible environments, and requires uv 0.12.x because uv only guarantees lockfile compatibility within a minor release. PyTorch is an optional `gpu` extra: Linux resolves the CUDA 13.0 build, while non-Linux platforms resolve the CPU build.
+Python itself and Python dependencies are managed by uv. The repository pins Python 3.13 in `.python-version` and uses `pyproject.toml` as the dependency source of truth. `uv.lock` is intentionally not committed; each machine resolves dependencies locally. PyTorch is an optional `gpu` extra: Linux resolves the CUDA 13.0 build, while non-Linux platforms resolve the CPU build.
 
 ## Python environment
-
-Check uv first:
-
-```bash
-uv --version
-```
-
-If it is older than 0.12.15, upgrade it. Standalone-installer builds can use `uv self update`; otherwise upgrade uv with the package manager that installed it.
 
 Create/sync the lightweight base environment:
 
 ```bash
-uv sync --locked
+uv sync
 ```
 
 The base environment has no heavy runtime dependencies. Local correctness tests need PyTorch and will automatically request the `gpu` extra through CMake; you can also install it explicitly:
 
 ```bash
-uv sync --locked --extra gpu
+uv sync --extra gpu
 ```
 
-Dependency changes should go through uv, for example `uv add --optional gpu <package>`, followed by committing both `pyproject.toml` and `uv.lock`.
+Dependency changes should go through uv, for example `uv add --optional gpu <package>`. Commit `pyproject.toml`; the locally generated `uv.lock` is ignored.
 
 ## First configure
 
@@ -81,7 +73,7 @@ cmake --build build --target lgpu_easy_1_vector_add
 cmake --build build --target check_easy_1_vector_add
 ```
 
-The `check_*` target builds the CUDA shared library and runs the official functional tests from that challenge's `challenge.py` against your `solve` function. Python is invoked as `uv run --locked --extra gpu python ...`, so the test environment always matches the committed lockfile.
+The `check_*` target builds the CUDA shared library and runs the official functional tests from that challenge's `challenge.py` against your `solve` function. Python is invoked as `uv run --extra gpu python ...`, so uv resolves and syncs the environment from `pyproject.toml` as needed.
 
 List all targets:
 
@@ -155,7 +147,7 @@ Challenge statements, starter code, tests, and reference implementations belong 
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` validates the harness on every push and pull request. It also verifies that `uv.lock` matches `pyproject.toml` and runs Python helper checks through uv.
+`.github/workflows/ci.yml` validates the harness on every push and pull request and runs Python helper checks through uv using `pyproject.toml`.
 
 The hosted job runs inside an NVIDIA CUDA development container, pins the upstream challenge set to a known commit for reproducibility, configures with `sm_75` instead of `native` (GitHub-hosted runners do not have a physical GPU), verifies that every upstream CUDA starter produced a local solution and a `compile_commands.json` entry, verifies that a second configure succeeds with the cached upstream repository's remote deliberately made unreachable, then compiles all generated CUDA starter libraries.
 
