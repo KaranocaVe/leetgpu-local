@@ -1,0 +1,42 @@
+{
+  "name": "LeetGPU - VS Code (no GPU)",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "../.."
+  },
+  "remoteUser": "root",
+  "containerEnv": {
+    "UV_PROJECT_ENVIRONMENT": "/root/.venvs/leetgpu-local-vscode"
+  },
+  "mounts": [
+    "source=leetgpu-local-uv-cache,target=/root/.cache/uv,type=volume",
+    "source=leetgpu-local-uv-data,target=/root/.local/share/uv,type=volume",
+    "source=leetgpu-local-upstream-cache,target=/root/.cache/leetgpu-local,type=volume",
+    "source=leetgpu-local-vscode-venvs,target=/root/.venvs,type=volume"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-python.python",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "cmake.useCMakePresets": "always",
+        "cmake.configurePreset": "container-no-gpu",
+        "cmake.configureOnOpen": false,
+        "clangd.arguments": [
+          "--background-index",
+          "--completion-style=detailed",
+          "--compile-commands-dir=/root/.cache/leetgpu-local/build-no-gpu"
+        ],
+        "files.associations": {
+          "*.cu": "cpp",
+          "*.cuh": "cpp"
+        }
+      }
+    }
+  }
+}
