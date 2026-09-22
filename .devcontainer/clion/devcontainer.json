@@ -14,5 +14,10 @@
     "source=leetgpu-local-upstream-cache,target=/root/.cache/leetgpu-local,type=volume",
     "source=leetgpu-local-clion-venvs,target=/root/.venvs,type=volume"
   ],
-  "postCreateCommand": "bash .devcontainer/post-create.sh"
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "jetbrains": {
+      "backend": "CLion"
+    }
+  }
 }
