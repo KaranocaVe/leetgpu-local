@@ -76,13 +76,27 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLEETGPU_UPSTREAM_TAG="$LEETGPU_CI_UPSTREAM" \
             -DLEETGPU_CUDA_ARCHITECTURES=75 \
-            -DLEETGPU_ENABLE_TESTS=OFF
+            -DLEETGPU_ENABLE_TESTS=OFF \
+            -DLEETGPU_FETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent"
       - name: Validate generated workspace and compile database
         run: |
           uv run --locked python tools/validate_configure.py \
-            --upstream build/_deps/leetgpu_challenges-src \
+            --upstream .cache/fetchcontent/leetgpu_challenges-src \
             --source . \
             --build build
+      - name: Verify reload is offline and CMP0169-clean
+        shell: bash
+        run: |
+          git -C .cache/fetchcontent/leetgpu_challenges-src remote set-url origin https://invalid.invalid/leetgpu-challenges.git
+          set -o pipefail
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLEETGPU_UPSTREAM_TAG="$LEETGPU_CI_UPSTREAM" \
+            -DLEETGPU_CUDA_ARCHITECTURES=75 \
+            -DLEETGPU_ENABLE_TESTS=OFF \
+            -DLEETGPU_FETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent" 2>&1 | tee /tmp/reconfigure.log
+          ! grep -q "CMP0169" /tmp/reconfigure.log
+          ! grep -q "FetchContent_Populate" /tmp/reconfigure.log
       - name: Compile every CUDA starter
         run: cmake --build build --target leetgpu-all --parallel 2
 
