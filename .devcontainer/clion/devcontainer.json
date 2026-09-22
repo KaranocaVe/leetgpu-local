@@ -1,0 +1,18 @@
+{
+  "name": "LeetGPU - CLion (no GPU)",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "../.."
+  },
+  "remoteUser": "root",
+  "containerEnv": {
+    "UV_PROJECT_ENVIRONMENT": "/root/.venvs/leetgpu-local-clion"
+  },
+  "mounts": [
+    "source=leetgpu-local-uv-cache,target=/root/.cache/uv,type=volume",
+    "source=leetgpu-local-uv-data,target=/root/.local/share/uv,type=volume",
+    "source=leetgpu-local-upstream-cache,target=/root/.cache/leetgpu-local,type=volume",
+    "source=leetgpu-local-clion-venvs,target=/root/.venvs,type=volume"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
+}
