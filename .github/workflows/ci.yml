@@ -38,8 +38,11 @@ jobs:
         run: uv sync
       - name: Compile Python helpers through uv
         run: uv run python -m py_compile tools/*.py
-      - name: Check CMake preset JSON
-        run: uv run python -m json.tool CMakePresets.json >/dev/null
+      - name: Check JSON configuration
+        run: |
+          uv run python -m json.tool CMakePresets.json >/dev/null
+          uv run python -m json.tool .devcontainer/vscode/devcontainer.json >/dev/null
+          uv run python -m json.tool .devcontainer/clion/devcontainer.json >/dev/null
 
   cuda-compile:
     name: Configure + compile all CUDA starters
@@ -80,6 +83,14 @@ jobs:
             --upstream .cache/fetchcontent/leetgpu_challenges-src \
             --source . \
             --build build
+      - name: Validate no-GPU container preset
+        run: |
+          cmake --preset container-no-gpu \
+            -DLEETGPU_UPSTREAM_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent/leetgpu_challenges-src"
+          uv run python tools/validate_configure.py \
+            --upstream .cache/fetchcontent/leetgpu_challenges-src \
+            --source . \
+            --build "$HOME/.cache/leetgpu-local/build-no-gpu"
       - name: Verify reload is offline and CMP0169-clean
         shell: bash
         run: |
