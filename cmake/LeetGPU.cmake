@@ -8,6 +8,10 @@ function(_leetgpu_slugify INPUT OUTPUT)
 endfunction()
 
 function(_leetgpu_ensure_upstream OUT_DIR)
+  if(POLICY CMP0168)
+    cmake_policy(SET CMP0168 NEW)
+  endif()
+
   if(LEETGPU_UPSTREAM_DIR)
     if(NOT EXISTS "${LEETGPU_UPSTREAM_DIR}/challenges")
       message(FATAL_ERROR "LEETGPU_UPSTREAM_DIR does not look like AlphaGPU/leetgpu-challenges: ${LEETGPU_UPSTREAM_DIR}")
@@ -19,19 +23,43 @@ function(_leetgpu_ensure_upstream OUT_DIR)
     else()
       set(_leetgpu_git_shallow TRUE)
     endif()
+
+    # Keep the fetched repository outside CMake's build directory so CLion's
+    # multiple profiles (Debug/Release/etc.) share one checkout.
+    file(MAKE_DIRECTORY "${LEETGPU_FETCHCONTENT_BASE_DIR}")
+    file(
+      LOCK "${LEETGPU_FETCHCONTENT_BASE_DIR}/.populate.lock"
+      GUARD FUNCTION
+      TIMEOUT 300
+      RESULT_VARIABLE _leetgpu_lock_result
+    )
+    if(NOT _leetgpu_lock_result STREQUAL "0")
+      message(FATAL_ERROR "Could not lock LeetGPU upstream cache: ${_leetgpu_lock_result}")
+    endif()
+
+    set(FETCHCONTENT_BASE_DIR "${LEETGPU_FETCHCONTENT_BASE_DIR}")
+
+    # Once the checkout exists, point FetchContent directly at it. This skips
+    # download/update logic entirely on normal CMake reloads.
+    set(_cached_source "${LEETGPU_FETCHCONTENT_BASE_DIR}/leetgpu_challenges-src")
+    if(EXISTS "${_cached_source}/challenges")
+      set(FETCHCONTENT_SOURCE_DIR_LEETGPU_CHALLENGES "${_cached_source}")
+    endif()
+
     FetchContent_Declare(
       leetgpu_challenges
       GIT_REPOSITORY https://github.com/AlphaGPU/leetgpu-challenges.git
       GIT_TAG        ${LEETGPU_UPSTREAM_TAG}
       GIT_SHALLOW    ${_leetgpu_git_shallow}
       GIT_PROGRESS   TRUE
+      # We only consume files from the challenge repository. Even if upstream
+      # grows a CMakeLists.txt later, don't add it to this build.
+      SOURCE_SUBDIR  __leetgpu_local_no_subdirectory__
     )
-    FetchContent_GetProperties(leetgpu_challenges)
-    if(NOT leetgpu_challenges_POPULATED)
-      FetchContent_Populate(leetgpu_challenges)
-    endif()
+    FetchContent_MakeAvailable(leetgpu_challenges)
     set(_upstream "${leetgpu_challenges_SOURCE_DIR}")
   endif()
+
   set(${OUT_DIR} "${_upstream}" PARENT_SCOPE)
 endfunction()
 
@@ -104,6 +132,31 @@ function(_leetgpu_register_one UPSTREAM_ROOT STARTER_FILE)
   set_property(GLOBAL APPEND PROPERTY LEETGPU_CHECK_TARGETS ${_check_target})
 endfunction()
 
+function(_leetgpu_add_update_target UPSTREAM_ROOT)
+  if(LEETGPU_UPSTREAM_DIR)
+    add_custom_target(leetgpu-update
+      COMMAND "${CMAKE_COMMAND}" -E echo
+              "LEETGPU_UPSTREAM_DIR is user-managed; update it manually: ${LEETGPU_UPSTREAM_DIR}"
+      USES_TERMINAL
+    )
+    return()
+  endif()
+
+  find_package(Git QUIET)
+  if(NOT Git_FOUND OR NOT EXISTS "${UPSTREAM_ROOT}/.git")
+    return()
+  endif()
+
+  add_custom_target(leetgpu-update
+    COMMAND "${GIT_EXECUTABLE}" -C "${UPSTREAM_ROOT}" fetch --depth=1 origin "${LEETGPU_UPSTREAM_TAG}"
+    COMMAND "${GIT_EXECUTABLE}" -C "${UPSTREAM_ROOT}" checkout --detach FETCH_HEAD
+    COMMAND "${CMAKE_COMMAND}" -E echo
+            "LeetGPU upstream updated. Reload CMake once to discover any newly added challenges."
+    USES_TERMINAL
+    VERBATIM
+  )
+endfunction()
+
 function(leetgpu_configure)
   _leetgpu_ensure_upstream(_upstream)
   set(LEETGPU_UPSTREAM_RESOLVED "${_upstream}" CACHE INTERNAL "Resolved upstream checkout")
@@ -137,7 +190,10 @@ function(leetgpu_configure)
     VERBATIM
   )
 
+  _leetgpu_add_update_target("${_upstream}")
+
   message(STATUS "LeetGPU: registered ${_count} CUDA challenge(s)")
+  message(STATUS "LeetGPU: upstream cache: ${_upstream}")
   message(STATUS "LeetGPU: Python runtime managed by uv (${UV_EXECUTABLE})")
   message(STATUS "LeetGPU: edit solutions/<difficulty>/<challenge>/solution.cu")
   message(STATUS "LeetGPU: run a challenge with: cmake --build build --target check_<difficulty>_<challenge>")

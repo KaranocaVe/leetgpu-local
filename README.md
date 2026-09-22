@@ -4,7 +4,9 @@
 
 Local CUDA development harness for [LeetGPU](https://leetgpu.com/challenges), with CMake, clangd-friendly compilation databases, and local correctness tests.
 
-The upstream challenge definitions are **not vendored**. CMake fetches `AlphaGPU/leetgpu-challenges` and copies each CUDA starter into `solutions/` only when that solution does not already exist. Your edits are never overwritten.
+The upstream challenge definitions are **not vendored**. On the first configure, CMake fetches `AlphaGPU/leetgpu-challenges` into a persistent user cache and copies each CUDA starter into `solutions/` only when that solution does not already exist. Your edits are never overwritten.
+
+The upstream checkout is shared by every CMake build directory/profile and lives outside the project tree so CLion does not index it. Defaults are `~/.cache/leetgpu-local/fetchcontent` on Linux, `~/Library/Caches/leetgpu-local/fetchcontent` on macOS, and `%LOCALAPPDATA%/leetgpu-local/fetchcontent` on Windows. Normal CMake reloads are fully local: once the cache exists, FetchContent is pointed directly at that checkout, so CLion opening/reloading the project does not perform a Git fetch or update.
 
 ## Requirements
 
@@ -118,6 +120,15 @@ You can pin an upstream revision instead of tracking `main`:
 cmake --preset default -DLEETGPU_UPSTREAM_TAG=<commit-or-tag>
 ```
 
+The cached checkout is deliberately **not** updated during normal configure/reload. To refresh it explicitly:
+
+```bash
+cmake --build build --target leetgpu-update
+cmake --fresh --preset default
+```
+
+If you use CLion, run the `leetgpu-update` target only when you actually want newer upstream challenges, then use **Reload CMake Project** once. This keeps ordinary IDE startup independent of GitHub/network latency.
+
 ## Typical workflow
 
 ```bash
@@ -138,7 +149,7 @@ Challenge statements, starter code, tests, and reference implementations belong 
 
 `.github/workflows/ci.yml` validates the harness on every push and pull request. It also verifies that `uv.lock` matches `pyproject.toml` and runs Python helper checks through uv.
 
-The hosted job runs inside an NVIDIA CUDA development container, pins the upstream challenge set to a known commit for reproducibility, configures with `sm_75` instead of `native` (GitHub-hosted runners do not have a physical GPU), verifies that every upstream CUDA starter produced a local solution and a `compile_commands.json` entry, then compiles all generated CUDA starter libraries.
+The hosted job runs inside an NVIDIA CUDA development container, pins the upstream challenge set to a known commit for reproducibility, configures with `sm_75` instead of `native` (GitHub-hosted runners do not have a physical GPU), verifies that every upstream CUDA starter produced a local solution and a `compile_commands.json` entry, verifies that a second configure succeeds with the cached upstream repository's remote deliberately made unreachable, then compiles all generated CUDA starter libraries.
 
 At the pinned upstream revision, the upstream repository has 101 challenge directories, but 100 CUDA starters: 18 Easy, 66 Medium, and 16 Hard. `easy/41_simple_inference` currently has no `starter.cu`, so it is intentionally not registered as a CUDA target. The CI validator derives the CUDA count from the upstream tree rather than hard-coding it.
 
