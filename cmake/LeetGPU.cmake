@@ -8,6 +8,10 @@ function(_leetgpu_slugify INPUT OUTPUT)
 endfunction()
 
 function(_leetgpu_ensure_upstream OUT_DIR)
+  if(POLICY CMP0168)
+    cmake_policy(SET CMP0168 NEW)
+  endif()
+
   if(LEETGPU_UPSTREAM_DIR)
     if(NOT EXISTS "${LEETGPU_UPSTREAM_DIR}/challenges")
       message(FATAL_ERROR "LEETGPU_UPSTREAM_DIR does not look like AlphaGPU/leetgpu-challenges: ${LEETGPU_UPSTREAM_DIR}")
