@@ -29,7 +29,7 @@ function(_leetgpu_ensure_upstream OUT_DIR)
       TIMEOUT 300
       RESULT_VARIABLE _leetgpu_lock_result
     )
-    if(NOT _leetgpu_lock_result EQUAL 0)
+    if(NOT _leetgpu_lock_result STREQUAL "0")
       message(FATAL_ERROR "Could not lock LeetGPU upstream cache: ${_leetgpu_lock_result}")
     endif()
 
